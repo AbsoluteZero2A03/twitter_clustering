@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+    "io/ioutil"
 	"github.com/dghubble/oauth1"
 	"github.com/dghubble/oauth1/twitter"
 	"log"
@@ -18,7 +19,7 @@ func main() {
 		CallbackURL:    "http://127.0.0.1:9002/callback",
 		Endpoint:       twitter.AuthorizeEndpoint,
 	}
-	requestToken, _, err := config.RequestToken()
+	requestToken, requestSecret, err := config.RequestToken()
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -28,9 +29,10 @@ func main() {
 	fmt.Println(authorizationURL)
 
 	auth_redirect := GenerateRedirect(authorizationURL.String())
+    auth_callback := GenerateCallback(requestSecret, config)
 
 	http.HandleFunc("/", auth_redirect)
-	http.HandleFunc("/callback", Callback)
+	http.HandleFunc("/callback", auth_callback)
 	err = http.ListenAndServe("127.0.0.1:9002", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
@@ -43,14 +45,30 @@ func GenerateRedirect(urlStr string) func(w http.ResponseWriter, r *http.Request
 	}
 }
 
-func Callback(w http.ResponseWriter, r *http.Request) {
-	requestToken, verifier, err := oauth1.ParseAuthorizationCallback(r)
-	if err != nil {
-		log.Fatal("Callback: ", err)
-	}
+func GenerateCallback(requestSecret string, config oauth1.Config) func(w http.ResponseWriter, r *http.Request) {
+    return func(w http.ResponseWriter, r *http.Request) {
+        requestToken, verifier, err := oauth1.ParseAuthorizationCallback(r)
+        if err != nil {
+            log.Fatal("Callback: ", err)
+        }
+        accessToken, accessSecret, err := config.AccessToken(requestToken, requestSecret, verifier)
 
-	fmt.Println(requestToken)
-	fmt.Println(verifier)
+        fmt.Println(requestToken)
+        fmt.Println(verifier)
+        fmt.Println(accessToken)
+        fmt.Println(accessSecret)
 
-	http.Redirect(w, r, "http://www.google.com", http.StatusFound)
+        token := oauth1.NewToken(accessToken, accessSecret)
+
+        httpClient := config.Client(oauth1.NoContext, token)
+
+        path := "https://api.twitter.com/1.1/friends/ids.json?screen_name=es_azff"
+        resp, _ := httpClient.Get(path)
+
+        defer resp.Body.Close()
+        body, _ := ioutil.ReadAll(resp.Body)
+        fmt.Println(string(body))
+
+        http.Redirect(w, r, "http://www.google.com", http.StatusFound)
+    }
 }
