@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
     "io/ioutil"
+    "encoding/json"
 	"github.com/dghubble/oauth1"
 	"github.com/dghubble/oauth1/twitter"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"reflect"
 )
+
 
 func main() {
 	fmt.Println(reflect.TypeOf(twitter.AuthorizeEndpoint))
@@ -62,12 +64,28 @@ func GenerateCallback(requestSecret string, config oauth1.Config) func(w http.Re
 
         httpClient := config.Client(oauth1.NoContext, token)
 
-        path := "https://api.twitter.com/1.1/friends/ids.json?screen_name=es_azff"
+        path := "https://api.twitter.com/1.1/friends/ids.json"
         resp, _ := httpClient.Get(path)
 
         defer resp.Body.Close()
         body, _ := ioutil.ReadAll(resp.Body)
-        fmt.Println(string(body))
+
+        //fmt.Println(string(body))
+
+        var m interface{}
+        json.Unmarshal(body, &m)
+
+        fl := m.(map[string]interface{})
+        ids := fl["ids"].([]interface{})
+
+        var int_ids[]uint64
+
+        for _, elt := range ids {
+            flt := elt.(float64)
+            int_ids = append(int_ids, uint64(flt))
+        }
+
+        fmt.Println(int_ids)
 
         http.Redirect(w, r, "http://www.google.com", http.StatusFound)
     }
