@@ -70,8 +70,6 @@ func GenerateCallback(requestSecret string, config oauth1.Config) func(w http.Re
         defer resp.Body.Close()
         body, _ := ioutil.ReadAll(resp.Body)
 
-        //fmt.Println(string(body))
-
         var m interface{}
         json.Unmarshal(body, &m)
 
