@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
+    "strconv"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -42,6 +43,19 @@ func getFriends(id string, auth_token string) []uint64 {
 	return int_ids
 }
 
+func getNetwork(friendsList []uint64, auth_token string) map[uint64]map[uint64]bool  {
+    network := make(map[uint64]map[uint64]bool)
+    for _, friend := range friendsList {
+        network[friend] = make(map[uint64]bool)
+        idStr := strconv.Itoa(friend)
+        currentFriends := getFriends(idStr, accessToken)
+        for _, nextFriend := range currentFriends {
+            network[friend][nextFriend] = true
+        }
+    }
+    return network
+}
+
 func main() {
 	consumerKey := strings.TrimSpace(os.Getenv("TWITTER_APP_CONSUMER_KEY"))
 	fmt.Println(consumerKey)
@@ -71,3 +85,4 @@ func main() {
 	friends := getFriends(os.Args[1], m.AccessToken)
 	fmt.Println(friends)
 }
+
