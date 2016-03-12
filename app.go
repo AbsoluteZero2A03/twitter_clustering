@@ -12,7 +12,6 @@ import (
 	"reflect"
 )
 
-
 func main() {
 	fmt.Println(reflect.TypeOf(twitter.AuthorizeEndpoint))
 	config := oauth1.Config{

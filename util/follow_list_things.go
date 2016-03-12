@@ -12,6 +12,15 @@ import (
 	"strings"
 )
 
+type TokenContainer struct {
+	AccessToken string `json:"access_token"`
+}
+
+type FriendsList struct {
+	IdList []float64 `json:"ids"`
+}
+
+
 func getFriends(id string, auth_token string) []uint64 {
 	baseUrlStr := "https://api.twitter.com/1.1/friends/ids.json?user_id="
 	urlStr := baseUrlStr + id
@@ -31,14 +40,6 @@ func getFriends(id string, auth_token string) []uint64 {
 		int_ids = append(int_ids, uint64(elt))
 	}
 	return int_ids
-}
-
-type TokenContainer struct {
-	AccessToken string `json:"access_token"`
-}
-
-type FriendsList struct {
-	IdList []float64 `json:"ids"`
 }
 
 func main() {
