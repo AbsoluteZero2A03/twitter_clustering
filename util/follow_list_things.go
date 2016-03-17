@@ -1,4 +1,4 @@
-package main
+package util
 
 import (
 	"bytes"
@@ -12,10 +12,6 @@ import (
 	"os"
 	"strings"
 )
-
-type TokenContainer struct {
-	AccessToken string `json:"access_token"`
-}
 
 type FriendsList struct {
 	IdList []float64 `json:"ids"`
@@ -47,8 +43,8 @@ func getNetwork(friendsList []uint64, auth_token string) map[uint64]map[uint64]b
     network := make(map[uint64]map[uint64]bool)
     for _, friend := range friendsList {
         network[friend] = make(map[uint64]bool)
-        idStr := strconv.Itoa(friend)
-        currentFriends := getFriends(idStr, accessToken)
+        idStr := strconv.FormatInt(int64(friend), 10)
+        currentFriends := getFriends(idStr, auth_token)
         for _, nextFriend := range currentFriends {
             network[friend][nextFriend] = true
         }

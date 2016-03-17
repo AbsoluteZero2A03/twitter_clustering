@@ -3,6 +3,10 @@ package util
 import (
     "net/http"
     "encoding/json"
+    "encoding/base64"
+    "compress/gzip"
+    "io/ioutil"
+    "bytes"
 )
 
 type TokenContainer struct {
@@ -10,6 +14,7 @@ type TokenContainer struct {
 }
 
 func getAccessToken(consumerKey string, consumerSecret string) string {
+	consumerString := base64.StdEncoding.EncodeToString([]byte(consumerKey + ":" + consumerSecret))
     twitterEndpoint := "https://api.twitter.com/oauth2/token"
     client := &http.Client{}
 
