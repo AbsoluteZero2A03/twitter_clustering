@@ -5,11 +5,11 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
-    "strconv"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -17,8 +17,7 @@ type FriendsList struct {
 	IdList []float64 `json:"ids"`
 }
 
-
-func getFriends(id string, auth_token string) []uint64 {
+func GetFriends(id string, auth_token string) []uint64 {
 	baseUrlStr := "https://api.twitter.com/1.1/friends/ids.json?user_id="
 	urlStr := baseUrlStr + id
 	client := &http.Client{}
@@ -39,17 +38,18 @@ func getFriends(id string, auth_token string) []uint64 {
 	return int_ids
 }
 
-func getNetwork(friendsList []uint64, auth_token string) map[uint64]map[uint64]bool  {
-    network := make(map[uint64]map[uint64]bool)
-    for _, friend := range friendsList {
-        network[friend] = make(map[uint64]bool)
-        idStr := strconv.FormatInt(int64(friend), 10)
-        currentFriends := getFriends(idStr, auth_token)
-        for _, nextFriend := range currentFriends {
-            network[friend][nextFriend] = true
-        }
-    }
-    return network
+func GetNetwork(friendsList []uint64, auth_token string) map[uint64]map[uint64]bool {
+	network := make(map[uint64]map[uint64]bool)
+	for _, friend := range friendsList {
+		fmt.Println(friend)
+		network[friend] = make(map[uint64]bool)
+		idStr := strconv.FormatInt(int64(friend), 10)
+		currentFriends := GetFriends(idStr, auth_token)
+		for _, nextFriend := range currentFriends {
+			network[friend][nextFriend] = true
+		}
+	}
+	return network
 }
 
 func main() {
@@ -78,7 +78,6 @@ func main() {
 	json.Unmarshal(bodyText, &m)
 	fmt.Println(m.AccessToken)
 
-	friends := getFriends(os.Args[1], m.AccessToken)
+	friends := GetFriends(os.Args[1], m.AccessToken)
 	fmt.Println(friends)
 }
-

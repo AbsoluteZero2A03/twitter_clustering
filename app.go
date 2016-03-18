@@ -1,12 +1,12 @@
 package main
 
 import (
+	"./util"
+	"encoding/json"
 	"fmt"
-    "io/ioutil"
-    "encoding/json"
 	"github.com/dghubble/oauth1"
 	"github.com/dghubble/oauth1/twitter"
-    "./util"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -31,7 +31,7 @@ func main() {
 	fmt.Println(authorizationURL)
 
 	auth_redirect := GenerateRedirect(authorizationURL.String())
-    auth_callback := GenerateCallback(requestSecret, config)
+	auth_callback := GenerateCallback(requestSecret, config)
 
 	http.HandleFunc("/", auth_redirect)
 	http.HandleFunc("/callback", auth_callback)
@@ -48,43 +48,44 @@ func GenerateRedirect(urlStr string) func(w http.ResponseWriter, r *http.Request
 }
 
 func GenerateCallback(requestSecret string, config oauth1.Config) func(w http.ResponseWriter, r *http.Request) {
-    return func(w http.ResponseWriter, r *http.Request) {
-        requestToken, verifier, err := oauth1.ParseAuthorizationCallback(r)
-        if err != nil {
-            log.Fatal("Callback: ", err)
-        }
-        accessToken, accessSecret, err := config.AccessToken(requestToken, requestSecret, verifier)
+	return func(w http.ResponseWriter, r *http.Request) {
+		requestToken, verifier, err := oauth1.ParseAuthorizationCallback(r)
+		if err != nil {
+			log.Fatal("Callback: ", err)
+		}
+		accessToken, accessSecret, err := config.AccessToken(requestToken, requestSecret, verifier)
 
-        fmt.Println(requestToken)
-        fmt.Println(verifier)
-        fmt.Println(accessToken)
-        fmt.Println(accessSecret)
+		fmt.Println(requestToken)
+		fmt.Println(verifier)
+		fmt.Println(accessToken)
+		fmt.Println(accessSecret)
 
-        token := oauth1.NewToken(accessToken, accessSecret)
+		token := oauth1.NewToken(accessToken, accessSecret)
 
-        httpClient := config.Client(oauth1.NoContext, token)
+		httpClient := config.Client(oauth1.NoContext, token)
 
-        path := "https://api.twitter.com/1.1/friends/ids.json"
-        resp, _ := httpClient.Get(path)
+		path := "https://api.twitter.com/1.1/friends/ids.json"
+		resp, _ := httpClient.Get(path)
 
-        defer resp.Body.Close()
-        body, _ := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		body, _ := ioutil.ReadAll(resp.Body)
 
-        var m interface{}
-        json.Unmarshal(body, &m)
+		var m interface{}
+		json.Unmarshal(body, &m)
 
-        fl := m.(map[string]interface{})
-        ids := fl["ids"].([]interface{})
+		fl := m.(map[string]interface{})
+		ids := fl["ids"].([]interface{})
 
-        var int_ids[]uint64
+		var int_ids []uint64
 
-        for _, elt := range ids {
-            flt := elt.(float64)
-            int_ids = append(int_ids, uint64(flt))
-        }
+		for _, elt := range ids {
+			flt := elt.(float64)
+			int_ids = append(int_ids, uint64(flt))
+		}
 
-        fmt.Println(int_ids)
+		fmt.Println(int_ids)
+		fmt.Println(util.GetNetwork(int_ids, util.GetAccessToken(os.Getenv("TWITTER_APP_CONSUMER_KEY"), os.Getenv("TWITTER_APP_CONSUMER_SECRET"))))
 
-        http.Redirect(w, r, "http://www.google.com", http.StatusFound)
-    }
+		http.Redirect(w, r, "http://www.google.com", http.StatusFound)
+	}
 }
