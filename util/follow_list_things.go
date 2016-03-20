@@ -1,16 +1,11 @@
 package util
 
 import (
-	"bytes"
-	"compress/gzip"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
-	"strings"
 )
 
 type FriendsList struct {
@@ -41,43 +36,14 @@ func GetFriends(id string, auth_token string) []uint64 {
 func GetNetwork(friendsList []uint64, auth_token string) map[uint64]map[uint64]bool {
 	network := make(map[uint64]map[uint64]bool)
 	for _, friend := range friendsList {
-		fmt.Println(friend)
 		network[friend] = make(map[uint64]bool)
 		idStr := strconv.FormatInt(int64(friend), 10)
+		fmt.Println(idStr)
 		currentFriends := GetFriends(idStr, auth_token)
+		fmt.Println(currentFriends)
 		for _, nextFriend := range currentFriends {
 			network[friend][nextFriend] = true
 		}
 	}
 	return network
-}
-
-func main() {
-	consumerKey := strings.TrimSpace(os.Getenv("TWITTER_APP_CONSUMER_KEY"))
-	fmt.Println(consumerKey)
-	consumerSecret := strings.TrimSpace(os.Getenv("TWITTER_APP_CONSUMER_SECRET"))
-	fmt.Println(consumerSecret)
-	fmt.Println(consumerKey + ":" + consumerSecret)
-	consumerString := base64.StdEncoding.EncodeToString([]byte(consumerKey + ":" + consumerSecret))
-
-	twitterEndpoint := "https://api.twitter.com/oauth2/token"
-
-	client := &http.Client{}
-	req, _ := http.NewRequest("POST", twitterEndpoint, bytes.NewBuffer([]byte("grant_type=client_credentials")))
-	req.Header.Add("Authorization", "Basic "+consumerString)
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
-	req.Header.Add("User-Agent", "DEEP LEARNING v0.0")
-	req.Header.Add("Accept-Encoding", "gzip")
-
-	resp, _ := client.Do(req)
-	defer resp.Body.Close()
-	bodyReader, _ := gzip.NewReader(resp.Body)
-	bodyText, _ := ioutil.ReadAll(bodyReader)
-
-	var m TokenContainer
-	json.Unmarshal(bodyText, &m)
-	fmt.Println(m.AccessToken)
-
-	friends := GetFriends(os.Args[1], m.AccessToken)
-	fmt.Println(friends)
 }
