@@ -12,7 +12,8 @@ type FriendsList struct {
 	IdList []float64 `json:"ids"`
 }
 
-func GetFriends(id string, auth_token string) []uint64 {
+func GetFriends(id string, consumerKey string, consumerSecret string) []uint64 {
+    auth_token := GetAccessToken(consumerKey, consumerSecret)
 	baseUrlStr := "https://api.twitter.com/1.1/friends/ids.json?user_id="
 	urlStr := baseUrlStr + id
 	client := &http.Client{}
@@ -33,13 +34,13 @@ func GetFriends(id string, auth_token string) []uint64 {
 	return int_ids
 }
 
-func GetNetwork(friendsList []uint64, auth_token string) map[uint64]map[uint64]bool {
+func GetNetwork(friendsList []uint64, consumerKey string, consumerSecret string) map[uint64]map[uint64]bool {
 	network := make(map[uint64]map[uint64]bool)
 	for _, friend := range friendsList {
 		network[friend] = make(map[uint64]bool)
 		idStr := strconv.FormatInt(int64(friend), 10)
 		fmt.Println(idStr)
-		currentFriends := GetFriends(idStr, auth_token)
+		currentFriends := GetFriends(idStr, consumerKey, consumerSecret)
 		fmt.Println(currentFriends)
 		for _, nextFriend := range currentFriends {
 			network[friend][nextFriend] = true
